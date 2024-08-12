@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkey Type - Test your typing skills!</title>
+    <style>
+        /* Definición de variables CSS (variables de color) */
+        :root {
+            color-scheme: dark light;
+            --yellow: #daaf38;
+            --green: #00b755;
+            --red: #ca4754;
+            --black: #222;
+            --gray: #999;
+        }
+
+        /* Estilo general del body */
+        body {
+            font-family: "Cascadia code", monospace;
+            background-color: var(--black);
+            display: grid;
+            place-content: center;
+            padding: 32px;
+            margin-top: 32px;
+        }
+
+        /* Estilos para la sección principal del juego */
+        section {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            max-width: 500px;
+            gap: 4px;
+        }
+
+        /* Estilo para el elemento de tiempo */
+        time {
+            color: var(--yellow);
+        }
+
+        /* Estilo para el input (campo de texto), haciéndolo invisible y no interactivo */
+        input {
+            z-index: -999;
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        /* Estilo para los párrafos que contienen las palabras */
+        p {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px 8px;
+            margin: 0;
+        }
+
+        /* Estilos para cada letra individual */
+        letter {
+            color: var(--gray);
+            position: relative;
+
+            /* Indicador de letra activa (el cursor) */
+            &.active::before {
+                content: '|';
+                color: var(--yellow);
+                font-size: 14px;
+                position: absolute;
+                left: -65%;
+                animation: 1s blink infinite ease-in-out;
+            }
+
+            /* Ajusta la posición del cursor para la última letra */
+            &.active.is-last::before {
+                left: 65%
+            }
+
+            /* Colorea la letra correcta en verde */
+            &.correct {
+                color: var(--green);
+            }
+
+            /* Colorea la letra incorrecta en rojo */
+            &.incorrect {
+                color: var(--red);
+            }
+        }
+
+        /* Estilos para las palabras */
+        word {
+            border-bottom: 1.5px solid transparent;
+            transition: border-color 0.1s ease-in-out;
+
+            /* Resalta la palabra si contiene errores */
+            &.marked {
+                border-color: var(--red);
+            }
+        }
+
+        /* Animación de parpadeo para el cursor */
+        @keyframes blink {
+            0%, 25% {
+                opacity: 1;
+            }
+            75% {
+                opacity: 0;
+            }
+        }
+
+        /* Oculta la sección de resultados inicialmente */
+        #results {
+            display: none;
+        }
+
+        /* Estilos para los encabezados de los resultados */
+        h2 {
+            font-weight: 400;
+            opacity: .4;
+            margin: 0;
+            font-size: 16px;
+        }
+
+        /* Estilos para los resultados mostrados */
+        h3 {
+            font-weight: 400;
+            margin: 0px;
+            font-size: 24px;
+            color: var(--yellow);
+        }
+
+        /* Estilos para el botón de recargar */
+        #reload-button {
+            background-color: transparent;
+            border: 0;
+            margin-top: 32px;
+            opacity: .4;
+            padding: 8px;
+            display: inline-block;
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+            border-radius: 16px;
+
+            /* Efecto hover para el botón de recargar */
+            &:hover {
+                background: #444;
+                opacity: 1;
+                scale: 110%;
+                cursor: pointer;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <!-- Sección del juego -->
+        <section id="game">
+            <time></time> <!-- Mostrar el tiempo restante -->
+            <p></p> <!-- Contiene las palabras a escribir -->
+            <input autofocus> <!-- Campo de texto oculto para capturar la entrada del usuario -->
+        </section>
+        
+        <!-- Sección de resultados -->
+        <section id="results">
+            <h2>wpm</h2>
+            <h3 id="results-wpm"></h3> <!-- Mostrar las palabras por minuto -->
+
+            <h2>accuracy</h2>
+            <h3 id="results-accuracy"></h3> <!-- Mostrar la precisión -->
+
+            <button id="reload-button" aria-label="Reload">
+                <!-- Botón para reiniciar el juego con un ícono de recargar -->
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" />
+                    <path d="M20 4v5h-5" />
+                </svg>
+            </button>
+        </section>
+
+    </main>
+</body>
+<script type="module">
+    // Importar las palabras iniciales desde un archivo externo
+    import { words as INITIAL_WORDS } from '../data.js'
+
+    // Seleccionar elementos del DOM
+    const $time = document.querySelector('time')
+    const $paragraph = document.querySelector('p')
+    const $input = document.querySelector('input')
+    const $game = document.querySelector('#game')
+    const $results = document.querySelector('#results')
+    const $wpm = $results.querySelector('#results-wpm')
+    const $accuracy = $results.querySelector('#results-accuracy')
+    const $button = document.querySelector('#reload-button')
+
+    const INITIAL_TIME = 30; // Tiempo inicial del juego en segundos
+
+    let words = []; // Array para almacenar las palabras a escribir
+    let currentTime = INITIAL_TIME; // Tiempo restante
+    let intervalId; // Identificador del intervalo del cronómetro
+
+    // Inicializar el juego
+    initGame();
+    initEvents();
+
+    function initGame() {
+        // Mostrar el juego y ocultar los resultados
+        $game.style.display = 'flex'
+        $results.style.display = 'none'
+        $input.value = ""
+
+        // Barajar las palabras y seleccionar las primeras 32
+        words = INITIAL_WORDS.toSorted(() => Math.random() - 0.5).slice(0, 32)
+        currentTime = INITIAL_TIME
+
+        // Mostrar el tiempo inicial
+        $time.textContent = currentTime
+
+        // Generar el HTML para las palabras y letras
+        $paragraph.innerHTML = words.map((word, index) => {
+            const letters = word.split('')
+            return `<word>
+                ${letters
+                    .map(letter => `<letter>${letter}</letter>`)
+                    .join('')
+                }
+                </word>
+            `
+        }).join('')
+
+        // Resaltar la primera palabra y la primera letra como activas
+        const $firstWord = $paragraph.querySelector('word')
+        $firstWord.classList.add('active')
+        const $firstLetter = $firstWord.querySelector('letter')
+        $firstLetter.classList.add('active')
+
+        // Iniciar el cronómetro que decrementa el tiempo cada segundo
+        intervalId = setInterval(() => {
+            currentTime--
+            $time.textContent = currentTime
+
+            if (currentTime === 0) {
+                clearInterval(intervalId) // Detener el cronómetro cuando el tiempo se agote
+                gameOver() // Finalizar el juego
+            }
+        }, 1000)
+    }
+
+    function initEvents() {
+        // Asegurarse de que el campo de texto esté enfocado cuando se presiona cualquier tecla
+        document.addEventListener('keydown', () => {
+            $input.focus()
+        })
+
+        // Escuchar eventos de teclado en el campo de texto
+        $input.addEventListener('keydown', onKeyDown)
+        $input.addEventListener('keyup', onKeyUp)
+
+        // Reiniciar el juego cuando se presiona el botón de recargar
+        $button.addEventListener('click', initGame)
+    }
+
+    function onKeyDown(event) {
+        const $currentWord = $paragraph.querySelector('word.active') // Palabra actual activa
+        const $currentLetter = $currentWord.querySelector('letter.active') // Letra actual activa
+
+        const { key } = event // Extraer la tecla presionada
+
+        // Si se presiona la barra espaciadora
+        if (key === ' ') {
+            event.preventDefault() // Evitar el comportamiento predeterminado (agregar un espacio)
+
+            const $nextWord = $currentWord.nextElementSibling // Obtener la siguiente palabra
+            const $nextLetter = $nextWord.querySelector('letter') // Obtener la primera letra de la siguiente palabra
+
+            // Desactivar la palabra y la letra actual
+            $currentWord.classList.remove('active', 'marked')
+            $currentLetter.classList.remove('active')
+
+            // Activar la siguiente palabra y letra
+            $nextWord.classList.add('active')
+            $nextLetter.classList.add('active')
+
+            $input.value = '' // Vaciar el campo de texto
+
+            // Verificar si hay letras incorrectas en la palabra actual
+            const hasMissedLetters = $currentWord.querySelectorAll('letter:not(.correct)').length > 0
+            const classToAdd = hasMissedLetters ? 'marked' : 'correct'
+            $currentWord.classList.add(classToAdd)
+
+            // Verificar si se ha terminado de escribir la última palabra
+            checkIfLastWordTyped();
+            return
+        }
+
+        // Si se presiona la tecla de retroceso
+        if (key === 'Backspace') {
+            const $prevWord = $currentWord.previousElementSibling // Obtener la palabra anterior
+            const $prevLetter = $currentLetter.previousElementSibling // Obtener la letra anterior
+
+            if (!$prevWord && !$prevLetter) {
+                event.preventDefault()
+                return
+            }
+
+            // Si hay una palabra marcada y no hay una letra anterior
+            const $wordMarked = $paragraph.querySelector('word.marked')
+            if ($wordMarked && !$prevLetter) {
+                event.preventDefault()
+                $prevWord.classList.remove('marked') // Desmarcar la palabra anterior
+                $prevWord.classList.add('active') // Activar la palabra anterior
+
+                const $letterToGo = $prevWord.querySelector('letter:last-child') // Obtener la última letra de la palabra anterior
+
+                // Cambiar el estado de las letras activas
+                $currentLetter.classList.remove('active')
+                $letterToGo.classList.add('active')
+
+                // Rellenar el input con las letras correctas e incorrectas de la palabra anterior
+                $input.value = [
+                    ...$prevWord.querySelectorAll('letter.correct, letter.incorrect')
+                ].map($el => {
+                    return $el.classList.contains('correct') ? $el.innerText : '*'
+                }).join('')
+            }
+        }
+    }
+
+    function onKeyUp() {
+        // Recuperar la palabra y letra actuales
+        const $currentWord = $paragraph.querySelector('word.active')
+        const $currentLetter = $currentWord.querySelector('letter.active')
+
+        const currentWord = $currentWord.textContent.trim() // Eliminar espacios en blanco
+        $input.maxLength = currentWord.length // Limitar la longitud del input a la longitud de la palabra actual
+
+        const $allLetters = $currentWord.querySelectorAll('letter') // Obtener todas las letras de la palabra actual
+
+        // Limpiar las clases de todas las letras
+        $allLetters.forEach($letter => $letter.classList.remove('correct', 'incorrect'))
+
+        // Comparar las letras ingresadas con las letras correctas
+        $input.value.split('').forEach((char, index) => {
+            const $letter = $allLetters[index]
+            const letterToCheck = currentWord[index]
+
+            const isCorrect = char === letterToCheck
+            const letterClass = isCorrect ? "correct" : "incorrect"
+            $letter.classList.add(letterClass)
+        })
+
+        // Cambiar el estado de las letras activas
+        $currentLetter.classList.remove('active', 'is-last')
+        const inputLength = $input.value.length
+        const $nextActiveLetter = $allLetters[inputLength]
+
+        if ($nextActiveLetter) {
+            $nextActiveLetter.classList.add('active')
+        } else {
+            $currentLetter.classList.add('active', 'is-last')
+        }
+
+        // Verificar si se ha terminado de escribir la última palabra
+        checkIfLastWordTyped();
+    }
+
+    function checkIfLastWordTyped() {
+        const $currentWord = $paragraph.querySelector('word.active'); // Obtener la palabra actual activa
+        const $nextWord = $currentWord.nextElementSibling; // Obtener la siguiente palabra
+
+        if (!$nextWord) { // Si no hay más palabras (es la última)
+            const $allLetters = $currentWord.querySelectorAll('letter');
+            const totalTyped = $input.value.length;
+
+            // Si el número de letras tipeadas es igual al total de letras de la palabra
+            if (totalTyped >= $allLetters.length) {
+                clearInterval(intervalId); // Parar el cronómetro
+                gameOver(); // Mostrar los resultados
+            }
+        }
+    }
+
+    function gameOver() {
+        $game.style.display = 'none' // Ocultar el juego
+        $results.style.display = 'flex' // Mostrar los resultados
+
+        // Calcular palabras correctas, letras correctas e incorrectas
+        const correctWords = $paragraph.querySelectorAll('word.correct').length
+        const correctLetter = $paragraph.querySelectorAll('letter.correct').length
+        const incorrectLetter = $paragraph.querySelectorAll('letter.incorrect').length
+
+        const totalLetters = correctLetter + incorrectLetter
+        const accuracy = totalLetters > 0
+            ? (correctLetter / totalLetters) * 100
+            : 0
+
+        // Calcular palabras por minuto (wpm) y precisión
+        const wpm = correctWords * 60 / INITIAL_TIME
+        $wpm.textContent = wpm
+        $accuracy.textContent = `${accuracy.toFixed(2)}%`
+    }
+</script>
+
+</html>
