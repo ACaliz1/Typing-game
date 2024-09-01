@@ -5,152 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monkey Type - Test your typing skills!</title>
-    <style>
-        /* Definición de variables CSS (variables de color) */
-        :root {
-            color-scheme: dark light;
-            --yellow: #daaf38;
-            --green: #00b755;
-            --red: #ca4754;
-            --black: #222;
-            --gray: #999;
-        }
-
-        /* Estilo general del body */
-        body {
-            font-family: "Cascadia code", monospace;
-            background-color: var(--black);
-            display: grid;
-            place-content: center;
-            padding: 32px;
-            margin-top: 32px;
-        }
-
-        /* Estilos para la sección principal del juego */
-        section {
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            max-width: 500px;
-            gap: 4px;
-        }
-
-        /* Estilo para el elemento de tiempo */
-        time {
-            color: var(--yellow);
-        }
-
-        /* Estilo para el input (campo de texto), haciéndolo invisible y no interactivo */
-        input {
-            z-index: -999;
-            position: absolute;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        /* Estilo para los párrafos que contienen las palabras */
-        p {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px 8px;
-            margin: 0;
-        }
-
-        /* Estilos para cada letra individual */
-        letter {
-            color: var(--gray);
-            position: relative;
-
-            /* Indicador de letra activa (el cursor) */
-            &.active::before {
-                content: '|';
-                color: var(--yellow);
-                font-size: 14px;
-                position: absolute;
-                left: -65%;
-                animation: 1s blink infinite ease-in-out;
-            }
-
-            /* Ajusta la posición del cursor para la última letra */
-            &.active.is-last::before {
-                left: 65%
-            }
-
-            /* Colorea la letra correcta en verde */
-            &.correct {
-                color: var(--green);
-            }
-
-            /* Colorea la letra incorrecta en rojo */
-            &.incorrect {
-                color: var(--red);
-            }
-        }
-
-        /* Estilos para las palabras */
-        word {
-            border-bottom: 1.5px solid transparent;
-            transition: border-color 0.1s ease-in-out;
-
-            /* Resalta la palabra si contiene errores */
-            &.marked {
-                border-color: var(--red);
-            }
-        }
-
-        /* Animación de parpadeo para el cursor */
-        @keyframes blink {
-            0%, 25% {
-                opacity: 1;
-            }
-            75% {
-                opacity: 0;
-            }
-        }
-
-        /* Oculta la sección de resultados inicialmente */
-        #results {
-            display: none;
-        }
-
-        /* Estilos para los encabezados de los resultados */
-        h2 {
-            font-weight: 400;
-            opacity: .4;
-            margin: 0;
-            font-size: 16px;
-        }
-
-        /* Estilos para los resultados mostrados */
-        h3 {
-            font-weight: 400;
-            margin: 0px;
-            font-size: 24px;
-            color: var(--yellow);
-        }
-
-        /* Estilos para el botón de recargar */
-        #reload-button {
-            background-color: transparent;
-            border: 0;
-            margin-top: 32px;
-            opacity: .4;
-            padding: 8px;
-            display: inline-block;
-            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-            border-radius: 16px;
-
-            /* Efecto hover para el botón de recargar */
-            &:hover {
-                background: #444;
-                opacity: 1;
-                scale: 110%;
-                cursor: pointer;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -161,7 +16,7 @@
             <p></p> <!-- Contiene las palabras a escribir -->
             <input autofocus> <!-- Campo de texto oculto para capturar la entrada del usuario -->
         </section>
-        
+
         <!-- Sección de resultados -->
         <section id="results">
             <h2>wpm</h2>
@@ -172,7 +27,8 @@
 
             <button id="reload-button" aria-label="Reload">
                 <!-- Botón para reiniciar el juego con un ícono de recargar -->
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    stroke-linecap="round" stroke-linejoin="round">
                     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                     <path d="M19.933 13.041a8 8 0 1 1 -9.925 -8.788c3.899 -1 7.935 1.007 9.425 4.747" />
                     <path d="M20 4v5h-5" />
