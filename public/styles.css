@@ -1,5 +1,5 @@
-  /* Definición de variables CSS (variables de color) */
-  :root {
+/* Definición de variables CSS (variables de color) */
+:root {
     color-scheme: dark light;
     --yellow: #daaf38;
     --green: #00b755;
@@ -141,4 +141,63 @@ h3 {
         scale: 110%;
         cursor: pointer;
     }
+}
+
+/* Estilos para el contenedor de estadísticas */
+#all-stats {
+    margin-top: 32px;
+    padding: 16px;
+    background-color: #2b2b2b;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    color: var(--gray);
+    font-size: 16px;
+    max-height: 300px;
+    overflow-y: auto;
+    text-align: left;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Estilo para cada estadística individual */
+#all-stats div {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #444;
+}
+
+/* Última estadística sin borde inferior */
+#all-stats div:last-child {
+    border-bottom: none;
+}
+
+/* Estilos para los nombres de usuario en las estadísticas */
+#all-stats div span.username {
+    font-weight: bold;
+    color: var(--yellow) !important;
+}
+
+/* Estilos para los valores de WPM y precisión */
+#all-stats div span.wpm,
+#all-stats div span.accuracy {
+    color: var(--green) !important;
+    margin-left: 8px;
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* Estilos para la fecha */
+#all-stats div span.date {
+    font-size: 12px;
+    color: var(--gray);
+    opacity: 0.8;
+    margin-left: 8px;
+    flex-grow: 1;
+    text-align: right;
+}
+
+
+#all-stats div span {
+    color: #e0e0e0;
 }
